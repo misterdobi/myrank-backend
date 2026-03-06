@@ -1,5 +1,4 @@
 {
-  "//": "force redeploy",
   "version": 2,
   "functions": {
     "api/*.js": {
