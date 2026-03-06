@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 // ---------------------------------------------
 // Ranking Logic
 // ---------------------------------------------
@@ -23,14 +21,12 @@ function computeRankingMetrics(posts, followers = 1) {
 
   const engagementRate = (totalLikes + totalComments) / followers;
 
-  // Posting frequency
   const timestamps = posts.map((p) => new Date(p.timestamp).getTime());
   const oldest = Math.min(...timestamps);
   const newest = Math.max(...timestamps);
   const weeks = Math.max(1, (newest - oldest) / (1000 * 60 * 60 * 24 * 7));
   const postsPerWeek = posts.length / weeks;
 
-  // Consistency score
   const sorted = timestamps.sort();
   const intervals = sorted.slice(1).map((t, i) => t - sorted[i]);
 
@@ -43,7 +39,6 @@ function computeRankingMetrics(posts, followers = 1) {
 
   const consistency = 1 / (1 + variance);
 
-  // Final creator score
   const creatorScore =
     engagementRate * 0.4 + postsPerWeek * 0.3 + consistency * 0.3;
 
@@ -71,15 +66,12 @@ async function scrapeInstagramProfile(url) {
 
     const html = await res.text();
 
-    // Extract username
     const usernameMatch = html.match(/"username":"(.*?)"/);
     const username = usernameMatch ? usernameMatch[1] : null;
 
-    // Extract follower count
     const followersMatch = html.match(/"edge_followed_by":{"count":(\d+)}/);
     const followers = followersMatch ? Number(followersMatch[1]) : 0;
 
-    // Extract recent posts (likes, comments, timestamp)
     const postRegex =
       /"edge_media_preview_like":{"count":(\d+)}.*?"edge_media_to_comment":{"count":(\d+)}.*?"taken_at_timestamp":(\d+)/g;
 
@@ -119,4 +111,11 @@ export default async function handler(req, res) {
 
   const metrics = computeRankingMetrics(data.posts, data.followers);
 
-  return res.status(200).json
+  return res.status(200).json({
+    platform: "instagram",
+    username: data.username,
+    followers: data.followers,
+    recent: data.posts,
+    metrics,
+  });
+}
