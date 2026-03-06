@@ -106,9 +106,9 @@ async function scrapeInstagramProfile(url) {
 
 
 // ---------------------------------------------
-// API Route
+// API Route (CommonJS for Vercel)
 // ---------------------------------------------
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   const { url } = req.query;
 
   if (!url) {
@@ -130,4 +130,4 @@ export default async function handler(req, res) {
     recent: data.posts,
     metrics,
   });
-}
+};
