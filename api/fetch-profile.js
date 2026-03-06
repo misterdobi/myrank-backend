@@ -60,17 +60,24 @@ async function scrapeInstagramProfile(url) {
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-      },
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+      }
     });
+
+    if (!res.ok) {
+      console.error("Instagram returned status:", res.status);
+      return null;
+    }
 
     const html = await res.text();
 
-    const usernameMatch = html.match(/"username":"(.*?)"/);
-    const username = usernameMatch ? usernameMatch[1] : null;
+    if (!html || html.length < 5000) {
+      console.error("Instagram returned empty or blocked HTML");
+      return null;
+    }
 
+    const usernameMatch = html.match(/"username":"(.*?)"/);
     const followersMatch = html.match(/"edge_followed_by":{"count":(\d+)}/);
-    const followers = followersMatch ? Number(followersMatch[1]) : 0;
 
     const postRegex =
       /"edge_media_preview_like":{"count":(\d+)}.*?"edge_media_to_comment":{"count":(\d+)}.*?"taken_at_timestamp":(\d+)/g;
@@ -82,16 +89,21 @@ async function scrapeInstagramProfile(url) {
       posts.push({
         likes: Number(match[1]),
         comments: Number(match[2]),
-        timestamp: new Date(Number(match[3]) * 1000).toISOString(),
+        timestamp: new Date(Number(match[3]) * 1000).toISOString()
       });
     }
 
-    return { username, followers, posts };
+    return {
+      username: usernameMatch ? usernameMatch[1] : null,
+      followers: followersMatch ? Number(followersMatch[1]) : 0,
+      posts
+    };
   } catch (err) {
     console.error("SCRAPER ERROR:", err);
     return null;
   }
 }
+
 
 // ---------------------------------------------
 // API Route
